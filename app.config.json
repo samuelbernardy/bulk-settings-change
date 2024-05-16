@@ -1,5 +1,5 @@
 {
-  "environmentUrl": "https://hwz97639.sprint.apps.dynatracelabs.com/",
+  "environmentUrl": "https://xxt49926.sprint.apps.dynatracelabs.com/",
   "app": {
     "name": "Bulk Settings Change",
     "version": "1.0.3",
@@ -10,7 +10,8 @@
       { "name": "storage:buckets:read", "comment": "default template" },
       { "name": "environment-api:entities:read", "comment": "read entities" },
       { "name": "settings:schemas:read", "comment": "read schemas" },
-      { "name": "settings:objects:write", "comment": "write settings" }
+      { "name": "settings:objects:write", "comment": "write settings" },
+      { "name": "settings:objects:read", "comment": "read settings"}
     ],
     "csp": {
       "img-src":[
