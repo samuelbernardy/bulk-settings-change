@@ -1,12 +1,13 @@
 {
   "environmentUrl": "https://hwz97639.sprint.apps.dynatracelabs.com/",
   "app": {
-    "name": "Bulk Settings Change",
-    "version": "1.0.3",
+    "name": "Bulk Settings Manager",
+    "version": "0.0.1",
     "description": "Apply settings 2.0 changes in bulk across multiple entities.",
-    "id": "my.bulk.settings.change",
+    "id": "bulk.settings.manager",
     "scopes": [
       { "name": "storage:logs:read", "comment": "default template" },
+      { "name": "storage:logs:write", "comment": "write execution logs" },
       { "name": "storage:buckets:read", "comment": "default template" },
       { "name": "environment-api:entities:read", "comment": "read entities" },
       { "name": "settings:schemas:read", "comment": "read schemas" },

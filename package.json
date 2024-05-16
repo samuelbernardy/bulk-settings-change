@@ -1,6 +1,6 @@
 {
   "name": "bulk-settings-change",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Apply settings 2.0 changes in bulk across multiple entities.",
   "scripts": {
     "build": "dt-app build --prod",
