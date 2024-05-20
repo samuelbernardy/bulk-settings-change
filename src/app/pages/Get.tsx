@@ -17,7 +17,7 @@ import {
   Text,
   CodeSnippet
 } from '@dynatrace/strato-components-preview';
-import { EntitiesList, monitoredEntitiesClient, SchemaList, SettingsObjectsClient, settingsObjectsClient, ObjectsList, EffectiveSettingsValuesList} from "@dynatrace-sdk/client-classic-environment-v2"
+import { EntitiesList, monitoredEntitiesClient, SchemaList, SettingsObjectsClient, settingsObjectsClient, ObjectsList, EffectiveSettingsValuesList, SchemaDefinitionRestDto} from "@dynatrace-sdk/client-classic-environment-v2"
 import { settingsSchemasClient } from "@dynatrace-sdk/client-classic-environment-v2";
 import { InformationIcon, ResetIcon, ChevronLeftIcon } from '@dynatrace/strato-icons';
 import { Link } from 'react-router-dom';
@@ -27,7 +27,7 @@ export const Get = () => {
 
     const [schemasList, setSchemasList] = useState<SchemaList>()
     const [schema, setSchema] = useState<string>('');
-    const [settingsList, setSettingsList] = useState<EffectiveSettingsValuesList>()
+    const [settingsList, setSettingsList] = useState<SchemaDefinitionRestDto>()
     const [showConfirm, setShowConfirm] = useState(false);
 
     const entityColumns: TableColumn[] = [
@@ -49,11 +49,13 @@ export const Get = () => {
         getSchemas();
     }, []);
 
-    const getSettings = async (schema:string) => {
-        return await settingsObjectsClient.getEffectiveSettingsValues({
-            schemaIds: schema,
-            scope: "environment"
+    const getSchema = async (schema:string)=> {
+        let data = await settingsSchemasClient.getSchemaDefinition({
+            schemaId: schema
         })
+
+        let temp = Object.keys(data.types)
+        return temp
     }
 
     const handleSubmit = () => {
@@ -81,7 +83,7 @@ export const Get = () => {
 
     const handleConfirm = async () => {
         console.log(schema)
-        const data = await getSettings(schema)
+        const data = await getSchema(schema)
         setSettingsList(data)
         //console.log(settingsList)
         console.log(data)
@@ -138,13 +140,14 @@ export const Get = () => {
                     </Flex>
                 </Modal>
             </Flex></>
-            <CodeSnippet>{JSON.stringify(settingsList?.items)}</CodeSnippet></>
-            <DataTable
+            <CodeSnippet>{JSON.stringify(settingsList?.types)}</CodeSnippet></>
+            { <DataTable
                 columns={entityColumns}
-                data={settingsList?.items ?? []}
+                data={settingsList ?? []}
                 sortable
                 fullWidth
                 height={210}
-            ></DataTable></>
+            ></DataTable> }
+            </>
     )
 }

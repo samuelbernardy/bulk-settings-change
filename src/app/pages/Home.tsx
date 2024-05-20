@@ -135,6 +135,7 @@ export const Home = () => {
         <InformationIcon/>
         How-to-Guide
       </Button>
+      <Button as={Link} to="/get" variant='accent'>GET</Button>
       <Flex id="Set Up" flexDirection="row" width="100%">
         <Flex id="Entity Select" flexDirection="column" width="100%">
               <FormField label="EntitySelector">
