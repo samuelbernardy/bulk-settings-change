@@ -27,13 +27,13 @@ export const Get = () => {
 
     const [schemasList, setSchemasList] = useState<SchemaList>()
     const [schema, setSchema] = useState<string>('');
-    const [settingsList, setSettingsList] = useState<SchemaDefinitionRestDto>()
+    const [typeList, settypeList] = useState<Object[]>()
     const [showConfirm, setShowConfirm] = useState(false);
 
     const entityColumns: TableColumn[] = [
         {
-            header: 'Object',
-            accessor: 'displayName',
+            header: 'Types',
+            accessor: 'type',
             ratioWidth: 1
         }
     ]
@@ -54,8 +54,14 @@ export const Get = () => {
             schemaId: schema
         })
 
-        let temp = Object.keys(data.types)
-        return temp
+        let temp = Object.keys(data)
+        let typeList: {type:string}[] = []
+        temp.forEach(i => {typeList.push(
+            {
+                "type": i
+            }
+        )})
+        return typeList
     }
 
     const handleSubmit = () => {
@@ -70,7 +76,7 @@ export const Get = () => {
         }
     }
 
-    const handleSettingsList = async () => {
+    const handletypeList = async () => {
         const data = await settingsObjectsClient.getEffectiveSettingsValues({
             schemaIds: schema,
             scope: "environment"
@@ -78,14 +84,14 @@ export const Get = () => {
     }
 
     useEffect(() => {
-        console.log(settingsList)
-    }, [settingsList])
+        console.log(typeList)
+    }, [typeList])
 
     const handleConfirm = async () => {
         console.log(schema)
         const data = await getSchema(schema)
-        setSettingsList(data)
-        //console.log(settingsList)
+        settypeList(data)
+        //console.log(typeList)
         console.log(data)
         setShowConfirm(false)
         showToast({
@@ -140,10 +146,10 @@ export const Get = () => {
                     </Flex>
                 </Modal>
             </Flex></>
-            <CodeSnippet>{JSON.stringify(settingsList?.types)}</CodeSnippet></>
+            <CodeSnippet>{JSON.stringify(typeList)}</CodeSnippet></>
             { <DataTable
                 columns={entityColumns}
-                data={settingsList ?? []}
+                data={typeList ?? []}
                 sortable
                 fullWidth
                 height={210}
