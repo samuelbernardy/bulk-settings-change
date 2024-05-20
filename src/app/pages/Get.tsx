@@ -27,13 +27,13 @@ export const Get = () => {
 
     const [schemasList, setSchemasList] = useState<SchemaList>()
     const [schema, setSchema] = useState<string>('');
-    const [typeList, settypeList] = useState<Object[]>()
+    const [propertyList, setpropertyList] = useState<Object[]>()
     const [showConfirm, setShowConfirm] = useState(false);
 
     const entityColumns: TableColumn[] = [
         {
-            header: 'Types',
-            accessor: 'type',
+            header: 'Properties',
+            accessor: 'property',
             ratioWidth: 1
         }
     ]
@@ -54,14 +54,14 @@ export const Get = () => {
             schemaId: schema
         })
 
-        let temp = Object.keys(data)
-        let typeList: {type:string}[] = []
-        temp.forEach(i => {typeList.push(
+        let temp = Object.keys(data.properties)
+        let propertyList: {property:string}[] = []
+        temp.forEach(i => {propertyList.push(
             {
-                "type": i
+                "property": i
             }
         )})
-        return typeList
+        return propertyList
     }
 
     const handleSubmit = () => {
@@ -76,7 +76,7 @@ export const Get = () => {
         }
     }
 
-    const handletypeList = async () => {
+    const handlepropertyList = async () => {
         const data = await settingsObjectsClient.getEffectiveSettingsValues({
             schemaIds: schema,
             scope: "environment"
@@ -84,14 +84,14 @@ export const Get = () => {
     }
 
     useEffect(() => {
-        console.log(typeList)
-    }, [typeList])
+        console.log(propertyList)
+    }, [propertyList])
 
     const handleConfirm = async () => {
         console.log(schema)
         const data = await getSchema(schema)
-        settypeList(data)
-        //console.log(typeList)
+        setpropertyList(data)
+        //console.log(propertyList)
         console.log(data)
         setShowConfirm(false)
         showToast({
@@ -146,10 +146,10 @@ export const Get = () => {
                     </Flex>
                 </Modal>
             </Flex></>
-            <CodeSnippet>{JSON.stringify(typeList)}</CodeSnippet></>
+            <CodeSnippet>{JSON.stringify(propertyList)}</CodeSnippet></>
             { <DataTable
                 columns={entityColumns}
-                data={typeList ?? []}
+                data={propertyList ?? []}
                 sortable
                 fullWidth
                 height={210}
