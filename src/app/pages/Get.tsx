@@ -1,23 +1,17 @@
 import React, { ReactComponentElement, ReactElement, useEffect, useState } from 'react';
 import {
-  Button,
-  CodeEditor,
-  DataTable,
-  Flex,
-  FormField,
-  Heading,
-  Label,
-  Modal,
-  Paragraph,
-  SelectV2,
-  SelectV2Filter,
-  TableColumn,
-  TextInput,
-  showToast,
-  Text,
-  CodeSnippet
-} from '@dynatrace/strato-components-preview';
-import { EntitiesList, monitoredEntitiesClient, SchemaList, SettingsObjectsClient, settingsObjectsClient, ObjectsList, EffectiveSettingsValuesList, SchemaDefinitionRestDto} from "@dynatrace-sdk/client-classic-environment-v2"
+    Button,CodeEditor,DataTable,Flex,Heading,Label,Modal,
+    Paragraph,SelectV2,SelectV2Filter,TableColumn,showToast,Text,CodeSnippet
+  } from '@dynatrace/strato-components-preview';
+  import {
+    FormField,
+    TextInput,
+  } from '@dynatrace/strato-components-preview/forms';  
+import { EntitiesList, monitoredEntitiesClient, 
+    SchemaList, SettingsObjectsClient, settingsObjectsClient, 
+    ObjectsList, EffectiveSettingsValuesList, SchemaDefinitionRestDto,
+    PropertyDefinition
+} from "@dynatrace-sdk/client-classic-environment-v2"
 import { settingsSchemasClient } from "@dynatrace-sdk/client-classic-environment-v2";
 import { InformationIcon, ResetIcon, ChevronLeftIcon } from '@dynatrace/strato-icons';
 import { Link } from 'react-router-dom';
@@ -25,34 +19,15 @@ import { type } from 'os';
 
 export const Get = () => {
 
+    // state variables
+
     const [schemasList, setSchemasList] = useState<SchemaList>()
     const [schema, setSchema] = useState<string>('');
     const [propertyList, setpropertyList] = useState<Object[]>()
     const [showConfirm, setShowConfirm] = useState(false);
-    const [objectCollection, setObjectCollection] = useState<Object[]>([{}]);
+    const [objectCollection, setObjectCollection] = useState<ObjectsList>();
 
-    const entityColumns: TableColumn[] = [
-        {
-            header: 'Properties',
-            accessor: 'property',
-            ratioWidth: 5
-        },{
-            header: 'Action',
-            accessor: 'action',
-            ratioWidth: 1
-        }
-    ]
-
-    useEffect(()=> {
-    
-        async function getSchemas() {
-          const data = await settingsSchemasClient.getAvailableSchemaDefinitions();
-          setSchemasList(data);
-        }
-        
-        console.log('Called')
-        getSchemas();
-    }, []);
+    // constant functions
 
     const getSchema = async (schema: string, filter?: string)=> {
         let schemaDef = await settingsSchemasClient.getSchemaDefinition({
@@ -61,15 +36,15 @@ export const Get = () => {
         let settingsObjects = await settingsObjectsClient.getSettingsObjects({
             schemaIds: schema,
             filter: filter ?? "",
-            pageSize: 500
+            pageSize: 5
         })
-        setObjectCollection(settingsObjects.items)
+        setObjectCollection(settingsObjects)
         console.log(objectCollection)
         let temp = Object.keys(schemaDef.properties)
-        let propertyList: {property:string, action:ReactElement}[] = []
+        let propertyList: {property?:string, action:ReactElement}[] = []
         temp.forEach(i => {propertyList.push(
             {
-                "property": i,
+                "property": schemaDef.properties[i]?.displayName,
                 "action": (
                 <Flex>
                     <Button variant="emphasized" width="full" onClick={handleAddSelect}>
@@ -83,7 +58,6 @@ export const Get = () => {
         )})
         return propertyList
     }
-
     const handleSubmit = () => {
         if (schema) {
             setShowConfirm(true)
@@ -97,18 +71,12 @@ export const Get = () => {
     }
     const handleAddSelect = () => {}
     const handleUpdateSelect = () => {}
-
     const handlepropertyList = async () => {
         const data = await settingsObjectsClient.getEffectiveSettingsValues({
             schemaIds: schema,
             scope: "environment"
         })
     }
-
-    useEffect(() => {
-        console.log(propertyList)
-    }, [propertyList])
-
     const handleConfirm = async () => {
         console.log(schema)
         const data = await getSchema(schema)
@@ -126,6 +94,39 @@ export const Get = () => {
             ),
         })
     }
+
+    // data must contain keys for each accessor
+
+    const entityColumns: TableColumn[] = [
+        {
+            header: 'Properties',
+            accessor: 'property',
+            ratioWidth: 5
+        },{
+            header: 'Action',
+            accessor: 'action',
+            ratioWidth: 1
+        }
+    ]
+
+    // effects 
+
+    useEffect(()=> {
+    
+        async function getSchemas() {
+          const data = await settingsSchemasClient.getAvailableSchemaDefinitions();
+          setSchemasList(data);
+        }
+        
+        console.log('Called')
+        getSchemas();
+    }, []);
+
+    
+    useEffect(() => {
+        console.log(propertyList)
+    }, [propertyList])
+
     
 
     return(
@@ -134,22 +135,30 @@ export const Get = () => {
             <ChevronLeftIcon />
             Back
         </Button><><>
-            <Flex flexDirection="column" alignItems="center" padding={32}></Flex><Flex flexDirection="row" padding={32} paddingBottom={0}>
-            </Flex></>
-                <Flex id="Schema Select" flexDirection="column" width="100%">
-                    <Label>Select a Schema</Label>
-                    <SelectV2 value={schema} onChange={setSchema}>
-                        <SelectV2.Trigger width="full" />
-                        <SelectV2.Content>
-                            <SelectV2Filter />
-                            {schemasList?.items.map((schema) => (
-                                // eslint-disable-next-line react/jsx-key
-                                <SelectV2.Option value={schema.schemaId}>{schema.schemaId}</SelectV2.Option>
-                            ))}
-                        </SelectV2.Content>
-                    </SelectV2>
-                </Flex></></><Flex id="Submit ALl" width="100%" paddingTop={64}>
-                <Button type="submit" variant="emphasized" width="full" onClick={handleConfirm}>
+            </>
+                <Flex id="Schema Select" flexDirection="row" width="full" paddingTop={32}>
+                    <Flex flexDirection='column' width="50%">
+                        <FormField required={true} label="Select a Schema to Bulk Edit">
+                            <SelectV2 required value={schema} onChange={setSchema}>
+                                <SelectV2.Trigger width="full" />
+                                <SelectV2.Content>
+                                    <SelectV2Filter />
+                                    {schemasList?.items.map((schema) => (
+                                        // eslint-disable-next-line react/jsx-key
+                                        <SelectV2.Option value={schema.schemaId}>{schema.schemaId}</SelectV2.Option>
+                                    ))}
+                                </SelectV2.Content>
+                            </SelectV2>
+                        </FormField>
+                    </Flex>
+                    <Flex flexDirection='column' width="50%">
+                        <FormField required={true} label="define a filter (Optional)">
+                            <TextInput required></TextInput>
+                        </FormField>
+                    </Flex>
+                </Flex></></>
+                <Flex id="Submit All" width="auto" paddingTop={8}>
+                <Button type="submit" color="primary" variant="accent" width="content" onClick={handleConfirm}>
                     Submit
                 </Button>
                 <Modal
@@ -168,14 +177,16 @@ export const Get = () => {
                     </Flex>
                 </Modal>
             </Flex></>
-            <CodeSnippet language="json">{JSON.stringify(objectCollection[0], null, 2)}</CodeSnippet></>
-            { <DataTable
+            <Label>Object Preview</Label>
+            <CodeSnippet maxHeight={256} language="json">{JSON.stringify(objectCollection?.items[0], null, 2)}</CodeSnippet></>
+            <Paragraph>{objectCollection?.totalCount} objects to be edited</Paragraph>
+            {<DataTable
                 columns={entityColumns}
                 data={propertyList ?? []}
                 sortable
                 fullWidth
                 height={210}
-            ></DataTable> }
+            ></DataTable>}
             </>
     )
 }
