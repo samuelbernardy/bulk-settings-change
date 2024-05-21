@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactComponentElement, ReactElement, useEffect, useState } from 'react';
 import {
   Button,
   CodeEditor,
@@ -29,11 +29,16 @@ export const Get = () => {
     const [schema, setSchema] = useState<string>('');
     const [propertyList, setpropertyList] = useState<Object[]>()
     const [showConfirm, setShowConfirm] = useState(false);
+    const [objectCollection, setObjectCollection] = useState<Object[]>([{}]);
 
     const entityColumns: TableColumn[] = [
         {
             header: 'Properties',
             accessor: 'property',
+            ratioWidth: 5
+        },{
+            header: 'Action',
+            accessor: 'action',
             ratioWidth: 1
         }
     ]
@@ -49,16 +54,31 @@ export const Get = () => {
         getSchemas();
     }, []);
 
-    const getSchema = async (schema:string)=> {
-        let data = await settingsSchemasClient.getSchemaDefinition({
+    const getSchema = async (schema: string, filter?: string)=> {
+        let schemaDef = await settingsSchemasClient.getSchemaDefinition({
             schemaId: schema
         })
-
-        let temp = Object.keys(data.properties)
-        let propertyList: {property:string}[] = []
+        let settingsObjects = await settingsObjectsClient.getSettingsObjects({
+            schemaIds: schema,
+            filter: filter ?? "",
+            pageSize: 500
+        })
+        setObjectCollection(settingsObjects.items)
+        console.log(objectCollection)
+        let temp = Object.keys(schemaDef.properties)
+        let propertyList: {property:string, action:ReactElement}[] = []
         temp.forEach(i => {propertyList.push(
             {
-                "property": i
+                "property": i,
+                "action": (
+                <Flex>
+                    <Button variant="emphasized" width="full" onClick={handleAddSelect}>
+                        Add
+                    </Button>
+                    <Button variant="emphasized" width="full" onClick={handleUpdateSelect}>
+                        Update
+                    </Button>
+                </Flex>)
             }
         )})
         return propertyList
@@ -75,6 +95,8 @@ export const Get = () => {
             })
         }
     }
+    const handleAddSelect = () => {}
+    const handleUpdateSelect = () => {}
 
     const handlepropertyList = async () => {
         const data = await settingsObjectsClient.getEffectiveSettingsValues({
@@ -127,7 +149,7 @@ export const Get = () => {
                         </SelectV2.Content>
                     </SelectV2>
                 </Flex></></><Flex id="Submit ALl" width="100%" paddingTop={64}>
-                <Button type="submit" variant="emphasized" width="full" onClick={handleSubmit}>
+                <Button type="submit" variant="emphasized" width="full" onClick={handleConfirm}>
                     Submit
                 </Button>
                 <Modal
@@ -146,7 +168,7 @@ export const Get = () => {
                     </Flex>
                 </Modal>
             </Flex></>
-            <CodeSnippet>{JSON.stringify(propertyList)}</CodeSnippet></>
+            <CodeSnippet language="json">{JSON.stringify(objectCollection[0], null, 2)}</CodeSnippet></>
             { <DataTable
                 columns={entityColumns}
                 data={propertyList ?? []}
