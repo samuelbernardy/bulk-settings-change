@@ -1,5 +1,5 @@
 {
-  "environmentUrl": "<env>",
+  "environmentUrl": "https://xxt49926.sprint.apps.dynatracelabs.com/",
   "app": {
     "name": "Bulk Settings Change",
     "version": "1.0.3",

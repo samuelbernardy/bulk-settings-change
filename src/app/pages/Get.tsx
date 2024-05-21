@@ -30,6 +30,8 @@ export const Get = () => {
     const [propertyList, setpropertyList] = useState<Object[]>()
     const [showConfirm, setShowConfirm] = useState(false);
     const [objectCollection, setObjectCollection] = useState<Object[]>([{}]);
+    const [showUpdate, setShowUpdate] = useState(false);
+    const [updateValue, setUpdateValue] = useState<string>('');
 
     const entityColumns: TableColumn[] = [
         {
@@ -96,13 +98,23 @@ export const Get = () => {
         }
     }
     const handleAddSelect = () => {}
-    const handleUpdateSelect = () => {}
+    const handleUpdateSelect = async () => {
+        //when this is clicked, we want to do a few things
+        //at first, lets add an input text box (dropdown in the future?) for the new value
+        setShowUpdate(true)
 
-    const handlepropertyList = async () => {
-        const data = await settingsObjectsClient.getEffectiveSettingsValues({
-            schemaIds: schema,
-            scope: "environment"
-        })
+        //get the associated property to be updated
+            //need to use a Cell to keep the row index when the button is clicked
+
+        //hold the value that was inputed
+
+        //get the associated object ID(s)
+
+        //then, lets call the PUT an object - https://docs.dynatrace.com/docs/shortlink/api-v2-settings-put-object#request-body-objects
+        // let put = await settingsObjectsClient.putSettingsObjectByObjectId({
+        //     body: {value: "2"},
+        //     objectId: '2'
+        // })
     }
 
     useEffect(() => {
@@ -167,6 +179,21 @@ export const Get = () => {
                         </Button>
                     </Flex>
                 </Modal>
+                <Modal
+                    title="Enter new value"
+                    show={showUpdate}
+                    onDismiss={() => setShowUpdate(false)}
+                    size="small"
+                >
+                    <Flex paddingRight={16} paddingTop={16}>
+                        <Button type="submit" color="critical" variant="emphasized" onClick={() => setShowConfirm(false)}>
+                            No
+                        </Button>
+                        <Button type="submit" color="success" variant="emphasized" onClick={handleConfirm}>
+                            Yes
+                        </Button>
+                    </Flex>
+                </Modal>
             </Flex></>
             <CodeSnippet language="json">{JSON.stringify(objectCollection[0], null, 2)}</CodeSnippet></>
             { <DataTable
@@ -174,7 +201,7 @@ export const Get = () => {
                 data={propertyList ?? []}
                 sortable
                 fullWidth
-                height={210}
+                //height={500}
             ></DataTable> }
             </>
     )
