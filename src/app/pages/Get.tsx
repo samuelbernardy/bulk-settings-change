@@ -10,7 +10,8 @@ import {
 import { EntitiesList, monitoredEntitiesClient, 
     SchemaList, SettingsObjectsClient, settingsObjectsClient, 
     ObjectsList, EffectiveSettingsValuesList, SchemaDefinitionRestDto,
-    PropertyDefinition
+    PropertyDefinition,
+    PropertyDefinitionType
 } from "@dynatrace-sdk/client-classic-environment-v2"
 import { settingsSchemasClient } from "@dynatrace-sdk/client-classic-environment-v2";
 import { InformationIcon, ResetIcon, ChevronLeftIcon } from '@dynatrace/strato-icons';
@@ -37,24 +38,28 @@ export const Get = () => {
         let settingsObjects = await settingsObjectsClient.getSettingsObjects({
             schemaIds: schema,
             filter: filter ?? "",
-            pageSize: 5
+            pageSize: 1
         })
         setObjectCollection(settingsObjects)
         console.log(objectCollection)
         let temp = Object.keys(schemaDef.properties)
-        let propertyList: {property?:string, action:ReactElement}[] = []
-        temp.forEach(i => {propertyList.push(
+        let propertyList: {property?:string, type?:PropertyDefinitionType|null, action:ReactElement}[] = []
+        temp.forEach(i => {
+            let isActionable = true
+            if(schemaDef.properties[i]?.type["$ref"]){isActionable = false}
+            propertyList.push(
             {
                 "property": schemaDef.properties[i]?.displayName,
+                "type": schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type,
                 "action": (
-                <Flex>
-                    <Button variant="emphasized" width="50%" onClick={handleAddSelect}>
+                <>{isActionable && <Flex >
+                    <Button hidden={isActionable} variant="emphasized" width="50%" onClick={handleAddSelect}>
                         Add
                     </Button>
                     <Button variant="emphasized" width="50%" onClick={handleUpdateSelect}>
                         Update
                     </Button>
-                </Flex>)
+                </Flex>}</>)
             }
         )})
         return propertyList
@@ -100,9 +105,13 @@ export const Get = () => {
 
     const entityColumns: TableColumn[] = [
         {
-            header: 'Properties',
+            header: 'Property',
             accessor: 'property',
             ratioWidth: 5
+        },{
+            header: 'Type',
+            accessor: 'type',
+            ratioWidth: 1
         },{
             header: 'Action',
             accessor: 'action',
