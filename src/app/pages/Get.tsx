@@ -5,7 +5,7 @@ import {
   } from '@dynatrace/strato-components-preview';
   import {
     FormField,
-    TextInput,
+    TextInput
   } from '@dynatrace/strato-components-preview/forms';  
 import { EntitiesList, monitoredEntitiesClient, 
     SchemaList, SettingsObjectsClient, settingsObjectsClient, 
@@ -23,6 +23,7 @@ export const Get = () => {
 
     const [schemasList, setSchemasList] = useState<SchemaList>()
     const [schema, setSchema] = useState<string>('');
+    const [filter, setFilter] = useState<string|undefined>();
     const [propertyList, setpropertyList] = useState<Object[]>()
     const [showConfirm, setShowConfirm] = useState(false);
     const [objectCollection, setObjectCollection] = useState<ObjectsList>();
@@ -47,10 +48,10 @@ export const Get = () => {
                 "property": schemaDef.properties[i]?.displayName,
                 "action": (
                 <Flex>
-                    <Button variant="emphasized" width="full" onClick={handleAddSelect}>
+                    <Button variant="emphasized" width="50%" onClick={handleAddSelect}>
                         Add
                     </Button>
-                    <Button variant="emphasized" width="full" onClick={handleUpdateSelect}>
+                    <Button variant="emphasized" width="50%" onClick={handleUpdateSelect}>
                         Update
                     </Button>
                 </Flex>)
@@ -79,7 +80,7 @@ export const Get = () => {
     }
     const handleConfirm = async () => {
         console.log(schema)
-        const data = await getSchema(schema)
+        const data = await getSchema(schema, filter?? "")
         setpropertyList(data)
         //console.log(propertyList)
         console.log(data)
@@ -130,17 +131,16 @@ export const Get = () => {
     
 
     return(
-
         <><><><><Button as={Link} to="/" variant='emphasized'>
             <ChevronLeftIcon />
             Back
         </Button><><>
             </>
-                <Flex id="Schema Select" flexDirection="row" width="full" paddingTop={32}>
-                    <Flex flexDirection='column' width="50%">
+                <Flex id="Schema Select" flexDirection="row" >
+                    <Flex flexDirection='column' width="50%" padding={24} >
                         <FormField required={true} label="Select a Schema to Bulk Edit">
                             <SelectV2 required value={schema} onChange={setSchema}>
-                                <SelectV2.Trigger width="full" />
+                                <SelectV2.Trigger width="100%" />
                                 <SelectV2.Content>
                                     <SelectV2Filter />
                                     {schemasList?.items.map((schema) => (
@@ -151,31 +151,16 @@ export const Get = () => {
                             </SelectV2>
                         </FormField>
                     </Flex>
-                    <Flex flexDirection='column' width="50%">
+                    <Flex flexDirection='column' width="50%" padding={24} >
                         <FormField required={true} label="define a filter (Optional)">
-                            <TextInput required></TextInput>
+                            <TextInput required onChange={(setFilter)}></TextInput>
                         </FormField>
                     </Flex>
                 </Flex></></>
                 <Flex id="Submit All" width="auto" paddingTop={8}>
-                <Button type="submit" color="primary" variant="accent" width="content" onClick={handleConfirm}>
-                    Submit
-                </Button>
-                <Modal
-                    title="Confirm Settings Change"
-                    show={showConfirm}
-                    onDismiss={() => setShowConfirm(false)}
-                    size="small"
-                >
-                    <Flex paddingRight={16} paddingTop={16}>
-                        <Button type="submit" color="critical" variant="emphasized" onClick={() => setShowConfirm(false)}>
-                            No
-                        </Button>
-                        <Button type="submit" color="success" variant="emphasized" onClick={handleConfirm}>
-                            Yes
-                        </Button>
-                    </Flex>
-                </Modal>
+                    <Button type="submit" color="primary" variant="accent" width="content" onClick={handleConfirm}>
+                        Submit
+                    </Button>
             </Flex></>
             <Label>Object Preview</Label>
             <CodeSnippet maxHeight={256} language="json">{JSON.stringify(objectCollection?.items[0], null, 2)}</CodeSnippet></>
