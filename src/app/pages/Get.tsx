@@ -91,13 +91,6 @@ export const Get = () => {
     }
 
     const handleUpdate = async () => {
-        //we need to create the SettingsObject using the property that was chosen and the value inputted
-        // const updateObject:SettingsObjectUpdate = {
-        //     value: {
-        //         "enabled": updateValue
-        //     }
-        // }
-        //console.log(updateObject)
         console.log(typeof(updateValue))
         console.log(updateProperty)
         //iterate through each ObjectId
@@ -105,9 +98,25 @@ export const Get = () => {
             let id:string = element["objectId"] ?? "";
             let prev_object_value = element["value"] ?? {};
             console.log(id)
+            //TODO - modify the right property - must map property names to field names
+                //e.g. Property Enabled -> enabled
+                //Management Zone -> managementZone
 
             //modify the previous object to insert the new property + value
-            prev_object_value["enabled"] = Boolean(updateValue)
+            if (updateType == "boolean") {
+                prev_object_value["enabled"] = Boolean(updateValue)
+            }
+            else if (updateType == "text") {
+                prev_object_value["enabled"] = updateValue
+            }
+            else if (updateType == "set") {
+                //TODO - change the type
+                prev_object_value["enabled"] = Boolean(updateValue)
+            }
+            else if(updateType == "list") {
+                //TODO - change the type
+                prev_object_value["enabled"] = Boolean(updateValue)
+            }
 
             let update = await settingsObjectsClient.putSettingsObjectByObjectId({
                 objectId: id,
@@ -213,7 +222,12 @@ export const Get = () => {
                 onDismiss={() => setShowDialogue(false)}
                 size="small"
             >
-                <TextInput required onChange={(setUpdateValue)}></TextInput>
+                {(updateType == "boolean" || updateType == "text") && <TextInput required onChange={(setUpdateValue)}></TextInput>}
+                
+                {/* make this dynamic such that input fields are added the more they are used 
+                updateType is being used to determine which type of input field is showing*/}
+                {/* {(updateType == "set") && <TextInput required onChange={(addInputField)}></TextInput>}
+                {(updateType == "list") && <Fo} */}
                 <Flex paddingRight={16} paddingTop={16}>
                 <Button type="submit" color="critical" variant="emphasized" onClick={() => setShowDialogue(false)}>
                     Cancel
