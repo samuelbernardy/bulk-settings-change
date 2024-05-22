@@ -11,7 +11,9 @@ import { EntitiesList, monitoredEntitiesClient,
     SchemaList, SettingsObjectsClient, settingsObjectsClient, 
     ObjectsList, EffectiveSettingsValuesList, SchemaDefinitionRestDto,
     PropertyDefinition,
-    PropertyDefinitionType
+    PropertyDefinitionType,
+    SettingsObject,
+    SettingsObjectUpdate
 } from "@dynatrace-sdk/client-classic-environment-v2"
 import { settingsSchemasClient } from "@dynatrace-sdk/client-classic-environment-v2";
 import { InformationIcon, ResetIcon, ChevronLeftIcon } from '@dynatrace/strato-icons';
@@ -27,13 +29,11 @@ export const Get = () => {
     const [filter, setFilter] = useState<string|undefined>();
     const [propertyList, setpropertyList] = useState<Object[]>()
     const [showConfirm, setShowConfirm] = useState(false);
-<<<<<<< HEAD
-    const [objectCollection, setObjectCollection] = useState<Object[]>([{}]);
-    const [showUpdate, setShowUpdate] = useState(false);
-    const [updateValue, setUpdateValue] = useState<string>('');
-=======
     const [objectCollection, setObjectCollection] = useState<ObjectsList>();
->>>>>>> 608aa716fd52a08cae4830c22976fbc3e385a28c
+    const [showDialogue, setShowDialogue] = useState(false);
+    const [updateProperty, setUpdateProperty] = useState<string|undefined>('')
+    const [updateValue, setUpdateValue] = useState<string>();
+    const [updateType, setUpdateType] = useState<string>('')
 
     // constant functions
 
@@ -62,7 +62,7 @@ export const Get = () => {
                     <Button hidden={isActionable} variant="emphasized" width="50%" onClick={handleAddSelect}>
                         Add
                     </Button>
-                    <Button variant="emphasized" width="50%" onClick={handleUpdateSelect}>
+                    <Button variant="emphasized" width="50%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName, schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
                         Update
                     </Button>
                 </Flex>}</>)
@@ -82,33 +82,35 @@ export const Get = () => {
         }
     }
     const handleAddSelect = () => {}
-<<<<<<< HEAD
-    const handleUpdateSelect = async () => {
-        //when this is clicked, we want to do a few things
-        //at first, lets add an input text box (dropdown in the future?) for the new value
-        setShowUpdate(true)
-
-        //get the associated property to be updated
-            //need to use a Cell to keep the row index when the button is clicked
-
-        //hold the value that was inputed
-
-        //get the associated object ID(s)
-
-        //then, lets call the PUT an object - https://docs.dynatrace.com/docs/shortlink/api-v2-settings-put-object#request-body-objects
-        // let put = await settingsObjectsClient.putSettingsObjectByObjectId({
-        //     body: {value: "2"},
-        //     objectId: '2'
-        // })
-=======
-    const handleUpdateSelect = () => {}
-    const handlepropertyList = async () => {
-        const data = await settingsObjectsClient.getEffectiveSettingsValues({
-            schemaIds: schema,
-            scope: "environment"
-        })
->>>>>>> 608aa716fd52a08cae4830c22976fbc3e385a28c
+    const handleUpdateSelect = (property:string|undefined, type) => {
+        //need to display different dialogues based on the type.
+        //e.g if it is a text -> textInput, boolean -> textInput, set -> something else
+        setShowDialogue(true)
+        setUpdateProperty(property)
+        setUpdateType(type)
     }
+
+    const handleUpdate = async () => {
+        //we need to create the SettingsObject using the property that was chosen and the value inputted
+        const updateObject:SettingsObjectUpdate = {
+            value: {
+                updateProperty: updateValue
+            }
+        }
+        console.log(updateObject)
+        console.log(updateValue)
+        console.log(updateProperty)
+        //iterate through each ObjectId
+        objectCollection?.items.forEach(async element => {
+            let id:string = element["objectId"] ?? "";
+
+            let update = await settingsObjectsClient.putSettingsObjectByObjectId({
+                objectId: id,
+                body: updateObject
+            })
+        });        
+    }
+    
     const handleConfirm = async () => {
         console.log(schema)
         const data = await getSchema(schema, filter?? "")
@@ -133,15 +135,15 @@ export const Get = () => {
         {
             header: 'Property',
             accessor: 'property',
-            ratioWidth: 5
+            ratioWidth: 3
         },{
             header: 'Type',
             accessor: 'type',
-            ratioWidth: 1
+            ratioWidth: 2
         },{
             header: 'Action',
             accessor: 'action',
-            ratioWidth: 1
+            ratioWidth: 2
         }
     ]
 
@@ -186,24 +188,6 @@ export const Get = () => {
                             </SelectV2>
                         </FormField>
                     </Flex>
-<<<<<<< HEAD
-                </Modal>
-                <Modal
-                    title="Enter new value"
-                    show={showUpdate}
-                    onDismiss={() => setShowUpdate(false)}
-                    size="small"
-                >
-                    <Flex paddingRight={16} paddingTop={16}>
-                        <Button type="submit" color="critical" variant="emphasized" onClick={() => setShowConfirm(false)}>
-                            No
-                        </Button>
-                        <Button type="submit" color="success" variant="emphasized" onClick={handleConfirm}>
-                            Yes
-                        </Button>
-                    </Flex>
-                </Modal>
-=======
                     <Flex flexDirection='column' width="50%" padding={24} >
                         <FormField required={true} label="define a filter (Optional)">
                             <TextInput required onChange={(setFilter)}></TextInput>
@@ -214,8 +198,24 @@ export const Get = () => {
                     <Button type="submit" color="primary" variant="accent" width="content" onClick={handleConfirm}>
                         Submit
                     </Button>
->>>>>>> 608aa716fd52a08cae4830c22976fbc3e385a28c
             </Flex></>
+            <Modal
+                title="Input the value to update"
+                show={showDialogue}
+                onDismiss={() => setShowDialogue(false)}
+                size="small"
+            >
+                <TextInput required onChange={(setUpdateValue)}></TextInput>
+                <Flex paddingRight={16} paddingTop={16}>
+                <Button type="submit" color="critical" variant="emphasized" onClick={() => setShowDialogue(false)}>
+                    Cancel
+                </Button>
+                <Button type="submit" color="success" variant="emphasized" onClick={handleUpdate}>
+                    Submit
+                </Button>
+                </Flex>
+            </Modal>
+                
             <Label>Object Preview</Label>
             <CodeSnippet maxHeight={256} language="json">{JSON.stringify(objectCollection?.items[0], null, 2)}</CodeSnippet></>
             <Paragraph>{objectCollection?.totalCount} objects to be edited</Paragraph>
@@ -224,13 +224,8 @@ export const Get = () => {
                 data={propertyList ?? []}
                 sortable
                 fullWidth
-<<<<<<< HEAD
-                //height={500}
-            ></DataTable> }
-=======
-                height={210}
+                //height={210}
             ></DataTable>}
->>>>>>> 608aa716fd52a08cae4830c22976fbc3e385a28c
             </>
     )
 }
