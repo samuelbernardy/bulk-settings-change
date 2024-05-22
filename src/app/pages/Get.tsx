@@ -92,22 +92,30 @@ export const Get = () => {
 
     const handleUpdate = async () => {
         //we need to create the SettingsObject using the property that was chosen and the value inputted
-        const updateObject:SettingsObjectUpdate = {
-            value: {
-                updateProperty: updateValue
-            }
-        }
-        console.log(updateObject)
-        console.log(updateValue)
+        // const updateObject:SettingsObjectUpdate = {
+        //     value: {
+        //         "enabled": updateValue
+        //     }
+        // }
+        //console.log(updateObject)
+        console.log(typeof(updateValue))
         console.log(updateProperty)
         //iterate through each ObjectId
         objectCollection?.items.forEach(async element => {
             let id:string = element["objectId"] ?? "";
+            let prev_object_value = element["value"] ?? {};
+            console.log(id)
+
+            //modify the previous object to insert the new property + value
+            prev_object_value["enabled"] = Boolean(updateValue)
 
             let update = await settingsObjectsClient.putSettingsObjectByObjectId({
                 objectId: id,
-                body: updateObject
+                body: {
+                    value: prev_object_value
+                }
             })
+            console.log(update)
         });        
     }
     
