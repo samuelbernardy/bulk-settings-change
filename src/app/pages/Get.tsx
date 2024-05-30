@@ -31,9 +31,10 @@ export const Get = () => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [objectCollection, setObjectCollection] = useState<ObjectsList>();
     const [showDialogue, setShowDialogue] = useState(false);
-    const [updateProperty, setUpdateProperty] = useState<string|undefined>('')
+    const [updateProperty, setUpdateProperty] = useState<string>('')
     const [updateValue, setUpdateValue] = useState<string>();
     const [updateType, setUpdateType] = useState<string>('')
+    const [propertyDictionary, setPropertyDictionary] = useState({})
 
     // constant functions
 
@@ -46,10 +47,18 @@ export const Get = () => {
             filter: filter ?? "",
             pageSize: 1
         })
+        console.log("Schema Definition")
+        console.log(schemaDef)
         setObjectCollection(settingsObjects)
         console.log(objectCollection)
-        let temp = Object.keys(schemaDef.properties)
+        const temp = Object.keys(schemaDef.properties)
         let propertyList: {property?:string, type?:PropertyDefinitionType|null, action:ReactElement}[] = []
+        let index = 0
+        let dict = {}
+        for (const key of temp) {
+            dict[schemaDef.properties[key]?.displayName ?? ""] = key
+        }
+        setPropertyDictionary(dict)
         temp.forEach(i => {
             let isActionable = true
             if(schemaDef.properties[i]?.type["$ref"]){isActionable = false}
@@ -62,12 +71,14 @@ export const Get = () => {
                     <Button hidden={isActionable} variant="emphasized" width="50%" onClick={handleAddSelect}>
                         Add
                     </Button>
-                    <Button variant="emphasized" width="50%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName, schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
+                    <Button variant="emphasized" width="50%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
                         Update
                     </Button>
                 </Flex>}</>)
             }
-        )})
+        )
+        
+    })
         return propertyList
     }
     const handleSubmit = () => {
@@ -82,7 +93,7 @@ export const Get = () => {
         }
     }
     const handleAddSelect = () => {}
-    const handleUpdateSelect = (property:string|undefined, type) => {
+    const handleUpdateSelect = (property:string, type) => {
         //need to display different dialogues based on the type.
         //e.g if it is a text -> textInput, boolean -> textInput, set -> something else
         setShowDialogue(true)
@@ -91,8 +102,6 @@ export const Get = () => {
     }
 
     const handleUpdate = async () => {
-        console.log(typeof(updateValue))
-        console.log(updateProperty)
         //iterate through each ObjectId
         objectCollection?.items.forEach(async element => {
             let id:string = element["objectId"] ?? "";
@@ -102,20 +111,24 @@ export const Get = () => {
                 //e.g. Property Enabled -> enabled
                 //Management Zone -> managementZone
 
+                //use the schemaDef.properties to get the property associated with each display name
+
+            let prop = propertyDictionary[updateProperty] //prop now contains the actual field name, not the display name
+
             //modify the previous object to insert the new property + value
             if (updateType == "boolean") {
-                prev_object_value["enabled"] = Boolean(updateValue)
+                prev_object_value[prop] = Boolean(updateValue)
             }
             else if (updateType == "text") {
-                prev_object_value["enabled"] = updateValue
+                prev_object_value[prop] = updateValue
             }
             else if (updateType == "set") {
                 //TODO - change the type
-                prev_object_value["enabled"] = Boolean(updateValue)
+                prev_object_value[prop] = Boolean(updateValue)
             }
             else if(updateType == "list") {
                 //TODO - change the type
-                prev_object_value["enabled"] = Boolean(updateValue)
+                prev_object_value[prop] = Boolean(updateValue)
             }
 
             let update = await settingsObjectsClient.putSettingsObjectByObjectId({
