@@ -5,6 +5,7 @@ import {
   } from '@dynatrace/strato-components-preview';
   import {
     FormField,
+    TextArea,
     TextInput
   } from '@dynatrace/strato-components-preview/forms';  
 import { EntitiesList, monitoredEntitiesClient, 
@@ -19,6 +20,7 @@ import { settingsSchemasClient } from "@dynatrace-sdk/client-classic-environment
 import { InformationIcon, ResetIcon, ChevronLeftIcon } from '@dynatrace/strato-icons';
 import { Link } from 'react-router-dom';
 import { type } from 'os';
+import { cloneDeep } from 'lodash';
 
 export const Get = () => {
 
@@ -102,42 +104,79 @@ export const Get = () => {
     }
 
     const handleUpdate = async () => {
+        setShowDialogue(false)
         //iterate through each ObjectId
         objectCollection?.items.forEach(async element => {
             let id:string = element["objectId"] ?? "";
-            let prev_object_value = element["value"] ?? {};
-            console.log(id)
-            //TODO - modify the right property - must map property names to field names
-                //e.g. Property Enabled -> enabled
-                //Management Zone -> managementZone
-
-                //use the schemaDef.properties to get the property associated with each display name
+            let prev_object_value = cloneDeep(element) ?? {}
 
             let prop = propertyDictionary[updateProperty] //prop now contains the actual field name, not the display name
 
             //modify the previous object to insert the new property + value
             if (updateType == "boolean") {
-                prev_object_value[prop] = Boolean(updateValue)
+                if(prev_object_value["value"]) {
+                    let v:boolean = updateValue=="true" ? true : false
+                    prev_object_value["value"][prop] = v
+                }
             }
-            else if (updateType == "text") {
-                prev_object_value[prop] = updateValue
+            else if (updateType == "text" || updateType == "setting") {
+                if(prev_object_value["value"]) {
+                    prev_object_value["value"][prop] = updateValue
+                }
             }
             else if (updateType == "set") {
-                //TODO - change the type
-                prev_object_value[prop] = Boolean(updateValue)
+                //TODO - work on formatting for successful calls
+                if(prev_object_value["value"]) {
+                    prev_object_value["value"][prop] = updateValue
+                }
             }
             else if(updateType == "list") {
-                //TODO - change the type
-                prev_object_value[prop] = Boolean(updateValue)
+                //TODO - work on formatting for successful calls
+                if(prev_object_value["value"]) {
+                    prev_object_value["value"][prop] = updateValue
+                }
+            }
+            else if(updateType == "integer" || updateType == "float") {
+                if(prev_object_value["value"]) {
+                    prev_object_value["value"][prop] = Number(updateValue)
+                }
             }
 
-            let update = await settingsObjectsClient.putSettingsObjectByObjectId({
-                objectId: id,
-                body: {
-                    value: prev_object_value
-                }
-            })
-            console.log(update)
+            console.log("Updated object")
+            console.log(prev_object_value["value"])
+
+            //known Types:
+            // boolean, text, set, list, integer, float, some enum, setting (an object id)
+            try {
+                let update = await settingsObjectsClient.putSettingsObjectByObjectId({
+                    objectId: id,
+                    body: {
+                        value: prev_object_value?.value ?? {}
+                    }
+                })
+                console.log(update)
+                showToast({
+                    title: 'Success!',
+                    type: 'success',
+                    message: (
+                      <>
+                        Sucessfully updated object(s). 
+                      </>
+                    ),
+                })
+            } catch(err) {
+                let r:string = String(err)
+                showToast({
+                    title: 'Error!',
+                    type: 'critical',
+                    message: (
+                      <>
+                        Error updating object: {r} 
+                      </>
+                    ),
+                })
+            }
+            
         });        
     }
     
@@ -186,7 +225,6 @@ export const Get = () => {
           setSchemasList(data);
         }
         
-        console.log('Called')
         getSchemas();
     }, []);
 
@@ -230,12 +268,16 @@ export const Get = () => {
                     </Button>
             </Flex></>
             <Modal
-                title="Input the value to update"
+                title="Input the value to update"   
                 show={showDialogue}
                 onDismiss={() => setShowDialogue(false)}
                 size="small"
             >
-                {(updateType == "boolean" || updateType == "text") && <TextInput required onChange={(setUpdateValue)}></TextInput>}
+                {(updateType == "boolean" || updateType == "text" || updateType == "integer" || updateType == "float" || updateType == "setting") && <TextInput required onChange={(setUpdateValue)} placeholder={updateType} ></TextInput>}
+                {(updateType == "set" || updateType == "list") && <TextArea width='full' value={updateValue ?? ""} required onChange={(setUpdateValue)} placeholder={updateType} ></TextArea>}
+
+                {/* //known Types:
+                // boolean, text, set, list, integer, float, some enum, setting (an object id) */}
                 
                 {/* make this dynamic such that input fields are added the more they are used 
                 updateType is being used to determine which type of input field is showing*/}
