@@ -20,7 +20,7 @@ import { settingsSchemasClient } from "@dynatrace-sdk/client-classic-environment
 import { InformationIcon, ResetIcon, ChevronLeftIcon } from '@dynatrace/strato-icons';
 import { Link } from 'react-router-dom';
 import { type } from 'os';
-import { cloneDeep } from 'lodash';
+import { List, cloneDeep } from 'lodash';
 
 export const Get = () => {
 
@@ -37,6 +37,11 @@ export const Get = () => {
     const [updateValue, setUpdateValue] = useState<string>();
     const [updateType, setUpdateType] = useState<string>('')
     const [propertyDictionary, setPropertyDictionary] = useState({})
+    const [showAddDialogue, setShowAddDialogue] = useState(false);
+    const [addProperty, setAddProperty] = useState<string>('')
+    const [addValue, setAddValue] = useState<string>();
+    const [addType, setAddType] = useState<string>('')
+
 
     // constant functions
 
@@ -47,7 +52,7 @@ export const Get = () => {
         let settingsObjects = await settingsObjectsClient.getSettingsObjects({
             schemaIds: schema,
             filter: filter ?? "",
-            pageSize: 1
+            pageSize: 100
         })
         console.log("Schema Definition")
         console.log(schemaDef)
@@ -63,16 +68,18 @@ export const Get = () => {
         setPropertyDictionary(dict)
         temp.forEach(i => {
             let isActionable = true
+            let canAdd = false
             if(schemaDef.properties[i]?.type["$ref"]){isActionable = false}
+            if(schemaDef.properties[i]?.type == "set" || schemaDef.properties[i]?.type == "list"){canAdd = true}
             propertyList.push(
             {
                 "property": schemaDef.properties[i]?.displayName,
                 "type": schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type,
                 "action": (
                 <>{isActionable && <Flex >
-                    <Button hidden={isActionable} variant="emphasized" width="50%" onClick={handleAddSelect}>
+                    {canAdd &&<Button hidden={isActionable} variant="emphasized" width="50%" onClick={() => handleAddSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
                         Add
-                    </Button>
+                    </Button>}
                     <Button variant="emphasized" width="50%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
                         Update
                     </Button>
@@ -94,13 +101,78 @@ export const Get = () => {
             })
         }
     }
-    const handleAddSelect = () => {}
+    const handleAddSelect = (property:string, type) => {
+        //implement add for only set and list types, as it doesn't make sense for other types that only hold single values
+        setShowAddDialogue(true)
+        setAddProperty(property)
+        setAddType(type)
+    }
     const handleUpdateSelect = (property:string, type) => {
         //need to display different dialogues based on the type.
         //e.g if it is a text -> textInput, boolean -> textInput, set -> something else
         setShowDialogue(true)
         setUpdateProperty(property)
         setUpdateType(type)
+    }
+
+    const handleAdd = async () => {
+        setShowAddDialogue(false)
+
+        objectCollection?.items.forEach(async element => {
+            let id:string = element["objectId"] ?? "";
+            console.log("ID")
+            console.log(id)
+            let prev_object_value = cloneDeep(element) ?? {}
+            let prop = propertyDictionary[addProperty]
+            console.log(prop)
+
+            if (addType == "list") {
+                if(prev_object_value["value"]) {
+                    let l = prev_object_value["value"][prop]
+
+                    //append the inputted value(s)
+                    l[l.length] = JSON.parse(addValue ?? "")
+                }
+            }
+            else if (addType == "set") {
+                if(prev_object_value["value"]) {
+                    let l = prev_object_value["value"][prop]
+
+                    //append the inputted value(s)
+                    l[l.length] = JSON.parse(addValue ?? "")
+                }
+            }
+
+            try {
+                let add = await settingsObjectsClient.putSettingsObjectByObjectId({
+                    objectId: id,
+                    body: {
+                        value: prev_object_value?.value ?? {}
+                    }
+                })
+                console.log(add)
+                showToast({
+                    title: 'Success!',
+                    type: 'success',
+                    message: (
+                      <>
+                        Sucessfully added!. 
+                      </>
+                    ),
+                })
+            } catch(err) {
+                let r:string = String(err)
+                showToast({
+                    title: 'Error!',
+                    type: 'critical',
+                    message: (
+                      <>
+                        Error adding: {r} 
+                      </>
+                    ),
+                })
+            }
+        })
     }
 
     const handleUpdate = async () => {
@@ -127,13 +199,13 @@ export const Get = () => {
             else if (updateType == "set") {
                 //TODO - work on formatting for successful calls
                 if(prev_object_value["value"]) {
-                    prev_object_value["value"][prop] = updateValue
+                    prev_object_value["value"][prop] = JSON.parse(updateValue ?? "")
                 }
             }
             else if(updateType == "list") {
                 //TODO - work on formatting for successful calls
                 if(prev_object_value["value"]) {
-                    prev_object_value["value"][prop] = updateValue
+                    prev_object_value["value"][prop] = JSON.parse(updateValue ?? "")
                 }
             }
             else if(updateType == "integer" || updateType == "float") {
@@ -263,6 +335,7 @@ export const Get = () => {
                     </Flex>
                 </Flex></></>
                 <Flex id="Submit All" width="auto" paddingTop={8}>
+                    {/* Potential idea: disable the submit button until a schema is selected or until it is changed. Will require a new state to hold the condition. */}
                     <Button type="submit" color="primary" variant="accent" width="content" onClick={handleConfirm}>
                         Submit
                     </Button>
@@ -288,6 +361,31 @@ export const Get = () => {
                     Cancel
                 </Button>
                 <Button type="submit" color="success" variant="emphasized" onClick={handleUpdate}>
+                    Submit
+                </Button>
+                </Flex>
+            </Modal>
+
+            <Modal
+                title="Input the value to add"   
+                show={showAddDialogue}
+                onDismiss={() => setShowAddDialogue(false)}
+                size="small"
+            >
+                {(addType == "set" || addType == "list") && <TextArea width='full' value={addValue ?? ""} required onChange={(setAddValue)} placeholder={"Please add 1 value at a time."} ></TextArea>}
+
+                {/* //known Types:
+                // boolean, text, set, list, integer, float, some enum, setting (an object id) */}
+                
+                {/* make this dynamic such that input fields are added the more they are used 
+                updateType is being used to determine which type of input field is showing*/}
+                {/* {(updateType == "set") && <TextInput required onChange={(addInputField)}></TextInput>}
+                {(updateType == "list") && <Fo} */}
+                <Flex paddingRight={16} paddingTop={16}>
+                <Button type="submit" color="critical" variant="emphasized" onClick={() => setShowAddDialogue(false)}>
+                    Cancel
+                </Button>
+                <Button type="submit" color="success" variant="emphasized" onClick={handleAdd}>
                     Submit
                 </Button>
                 </Flex>
