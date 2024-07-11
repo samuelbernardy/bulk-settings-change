@@ -77,12 +77,13 @@ export const Get = () => {
                 "type": schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type,
                 "action": (
                 <>{isActionable && <Flex >
-                    {canAdd &&<Button hidden={isActionable} variant="emphasized" width="50%" onClick={() => handleAddSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
+                <div style={{"width": "50%"}}>
+                    {canAdd &&<Button hidden={isActionable} variant="emphasized" width="100%" onClick={() => handleAddSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
                         Add
-                    </Button>}
-                    <Button variant="emphasized" width="50%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
+                    </Button>}</div>
+                    <div style={{"width": "50%"}}><Button variant="emphasized" width="100%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
                         Update
-                    </Button>
+                    </Button></div>
                 </Flex>}</>)
             }
         )
