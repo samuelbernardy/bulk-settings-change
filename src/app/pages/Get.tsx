@@ -69,25 +69,24 @@ export const Get = () => {
         temp.forEach(i => {
             let isActionable = true
             let canAdd = false
-            if(schemaDef.properties[i]?.type["$ref"]){isActionable = false}
+            if(schemaDef.properties[i]?.type["$ref"] || String(schemaDef.properties[i]?.displayName).includes("name") || String(schemaDef.properties[i]?.displayName).includes("Name")){isActionable = false}
             if(schemaDef.properties[i]?.type == "set" || schemaDef.properties[i]?.type == "list"){canAdd = true}
             propertyList.push(
-            {
-                "property": schemaDef.properties[i]?.displayName,
-                "type": schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type,
-                "action": (
-                <>{isActionable && <Flex >
-                <div style={{"width": "50%"}}>
-                    {canAdd &&<Button hidden={isActionable} variant="emphasized" width="100%" onClick={() => handleAddSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
-                        Add
-                    </Button>}</div>
-                    <div style={{"width": "50%"}}><Button variant="emphasized" width="100%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
-                        Update
-                    </Button></div>
-                </Flex>}</>)
-            }
-        )
-        
+                {
+                    "property": schemaDef.properties[i]?.displayName,
+                    "type": schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type,
+                    "action": (
+                    <>{isActionable && <Flex >
+                    <div style={{"width": "50%"}}>
+                        {canAdd &&<Button hidden={isActionable} variant="emphasized" width="100%" onClick={() => handleAddSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
+                            Add
+                        </Button>}</div>
+                        <div style={{"width": "50%"}}><Button variant="emphasized" width="100%" onClick={() => handleUpdateSelect(schemaDef.properties[i]?.displayName ?? "", schemaDef.properties[i]?.type["$ref"] ?? schemaDef.properties[i]?.type)}>
+                            Update
+                        </Button></div>
+                    </Flex>}</>)
+                }
+            )
     })
         return propertyList
     }
